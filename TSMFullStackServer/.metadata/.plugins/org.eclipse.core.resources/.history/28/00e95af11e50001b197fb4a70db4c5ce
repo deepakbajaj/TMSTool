@@ -43,11 +43,7 @@ public class TaskService {
 		return task;
 	}
 	
-	public Iterable<Task> findAllTaskByUser(String username){
+	public Iterable<Task> findAllProjects(String username){
 		return taskRepository.findAllByUpdatedBy(username);
-	}
-	
-	public Iterable<Task> findAllTasks(){
-		return taskRepository.findAll();
 	}
 }

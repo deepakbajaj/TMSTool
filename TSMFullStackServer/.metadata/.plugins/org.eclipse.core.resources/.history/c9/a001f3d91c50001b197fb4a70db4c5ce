@@ -50,20 +50,6 @@ public class Task {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JsonIgnore
 	private User user;
-	
-	private String updatedBy;
-
-	public String getUpdatedBy() {
-		return updatedBy;
-	}
-
-
-
-	public void setUpdatedBy(String updatedBy) {
-		this.updatedBy = updatedBy;
-	}
-
-
 
 	public Task() {
 		

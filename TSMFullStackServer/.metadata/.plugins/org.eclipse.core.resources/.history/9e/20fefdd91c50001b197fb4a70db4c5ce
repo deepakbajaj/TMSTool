@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.tms.tmsserver.domain.Task;
-import com.tms.tmsserver.domain.User;
 import com.tms.tmsserver.exceptions.TaskIdException;
 import com.tms.tmsserver.repositories.TaskRepository;
 import com.tms.tmsserver.repositories.UserRepository;
@@ -20,11 +19,8 @@ public class TaskService {
 	@Autowired
 	private UserRepository userRepository;
 	
-	public Task saveOrUpdateTask(Task task, String username) {
+	public Task saveOrUpdateTask(Task task) {
 		try {
-			User user = userRepository.findByUsername(username);
-			task.setUser(user);
-			task.setUpdatedBy(username);
 			task.setTaskIdentifier(task.getTaskIdentifier().toUpperCase());
 			return taskRepository.save(task);
 		}catch (Exception e) {
@@ -43,11 +39,7 @@ public class TaskService {
 		return task;
 	}
 	
-	public Iterable<Task> findAllTaskByUser(String username){
-		return taskRepository.findAllByUpdatedBy(username);
-	}
-	
-	public Iterable<Task> findAllTasks(){
+	public Iterable<Task> findAllProjects(){
 		return taskRepository.findAll();
 	}
 }

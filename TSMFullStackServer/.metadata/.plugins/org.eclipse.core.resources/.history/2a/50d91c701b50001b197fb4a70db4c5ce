@@ -47,23 +47,7 @@ public class Task {
 	@JsonFormat(pattern = "yyyy-mm-dd")
 	private Date updated_At;
 	
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JsonIgnore
-	private User user;
 	
-	private String updatedBy;
-
-	public String getUpdatedBy() {
-		return updatedBy;
-	}
-
-
-
-	public void setUpdatedBy(String updatedBy) {
-		this.updatedBy = updatedBy;
-	}
-
-
 
 	public Task() {
 		
@@ -71,18 +55,6 @@ public class Task {
 	
 	
 	
-	public User getUser() {
-		return user;
-	}
-
-
-
-	public void setUser(User user) {
-		this.user = user;
-	}
-
-
-
 	public Long getId() {
 		return id;
 	}

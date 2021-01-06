@@ -51,9 +51,7 @@ public class User implements UserDetails {
     public User() {
     }
 
- 
-
-	public Long getId() {
+    public Long getId() {
         return id;
     }
 

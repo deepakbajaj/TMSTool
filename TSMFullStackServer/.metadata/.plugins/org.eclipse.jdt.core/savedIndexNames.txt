@@ -22,7 +22,6 @@ INDEX VERSION 1.131+C:\Yash\TMS\TMSRepo\TSMFullStackServer\.metadata\.plugins\or
 2186875932.index
 2083505170.index
 1495350343.index
-1431521523.index
 2016788022.index
 1376145025.index
 514470826.index

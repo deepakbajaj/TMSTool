@@ -51,19 +51,7 @@ public class Task {
 	@JsonIgnore
 	private User user;
 	
-	private String updatedBy;
-
-	public String getUpdatedBy() {
-		return updatedBy;
-	}
-
-
-
-	public void setUpdatedBy(String updatedBy) {
-		this.updatedBy = updatedBy;
-	}
-
-
+	private String udpatedBy;
 
 	public Task() {
 		

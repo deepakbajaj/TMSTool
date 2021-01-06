@@ -5,7 +5,6 @@ import org.springframework.stereotype.Repository;
 
 import com.tms.tmsserver.domain.Task;
 import java.lang.String;
-import java.util.Iterator;
 import java.util.List;
 
 @Repository
@@ -18,6 +17,5 @@ public interface TaskRepository extends CrudRepository<Task, Long> {
 	
 	@Override
 	Iterable<Task> findAll(); 
-
-	Iterable<Task> findAllByUpdatedBy(String user);
+	
 }
