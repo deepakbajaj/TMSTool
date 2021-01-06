@@ -4,15 +4,18 @@ import java.util.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.ManyToOne;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 public class Task {
@@ -44,6 +47,8 @@ public class Task {
 	@JsonFormat(pattern = "yyyy-mm-dd")
 	private Date updated_At;
 	
+	
+
 	public Task() {
 		
 	}
@@ -143,7 +148,6 @@ public class Task {
 	public void setUpdated_At(Date updated_At) {
 		this.updated_At = updated_At;
 	}
-
 
 
 	@PrePersist
