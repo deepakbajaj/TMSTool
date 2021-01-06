@@ -1,0 +1,5 @@
+package com.tms.tmsserver.exceptions;
+
+public class CustomResponseEntity {
+
+}

@@ -5,7 +5,89 @@
   <link rel="self" href="https://spring.io/blog.atom" />
   <id>http://spring.io/blog.atom</id>
   <icon>https://spring.io/favicon.ico</icon>
-  <updated>2021-01-05T21:10:37Z</updated>
+  <updated>2021-01-06T00:00:00Z</updated>
+  <entry>
+    <title>YMNNALFT: Reactive Dataflow with Project Reactor</title>
+    <link rel="alternate" href="https://spring.io/blog/2021/01/06/ymnnalft-reactive-dataflow-with-project-reactor" />
+    <category term="engineering" label="Engineering" />
+    <author>
+      <name>Josh Long</name>
+    </author>
+    <id>tag:spring.io,2020-12-30:4317</id>
+    <updated>2021-01-06T00:00:00Z</updated>
+    <content type="html">&lt;p&gt;Welcome to another installment of &lt;em&gt;You May Not Need Another Library For That&lt;/em&gt; (YMNNALFT)! I&amp;rsquo;ve spent a lot of time since 2016 illuminating (or trying to, anyway!) some of the more enormous opportunities in the Spring ecosystem in &lt;a href="http://bit.ly/spring-tips-playlist"&gt;my Spring Tips videos&lt;/a&gt;. Today, however, I come to you in a different spirit, wanting to focus on the little, sometimes hidden, gems that do fantastic things and that might spare you an additional third-party dependency and its implied complexity. &lt;/p&gt;
+&lt;p&gt;And it&amp;rsquo;s a good thing we&amp;rsquo;re covering some of these complexity-reducing gems, too, you see, because the world is a confusing, complex, and dizzying place, and nowhere is that more evident than in the world of reactive data stream composition. Life comes at you fast and data, even more so. Data originates from everything (network services, databases, in-memory computation, threaded code, etc.). Data comes in many different sizes and shapes (one record, ten records, infinite records, etc.). Data comes in different volumes, starving or overwhelming its consumers. Data arrives at different cadences and times: now, later, all at once, periodically, etc. It&amp;rsquo;s much more natural to talk about data that&amp;rsquo;s already in memory, in hand, so to speak, than data that hasn&amp;rsquo;t yet materialized. And it&amp;rsquo;s more natural to talk about data in the single-threaded case than to deal with it in the concurrent case. &lt;/p&gt;
+&lt;img src = "https://media1.tenor.com/images/e6494f3096cf60a3832e0775936bf9cb/tenor.gif" /&gt;
+&lt;p&gt;It&amp;rsquo;s confusing to think about! Historically, it&amp;rsquo;s been even more tedious to address the different data dimensions in code. That is, until reactive programming.&lt;/p&gt;
+&lt;p&gt;Reactive programming offers a unified world view, allowing us to think about the messy world of (potentially asynchronous and potentially concurrent) integration in terms of an easy to use DSL with operators. The operators support the definition and composition of reactive stream data flow pipelines. Reactive programming offers a structured concurrency paradigm, greatly simplifying writing safe, scalable, resource-efficient code. &lt;/p&gt;
+&lt;p&gt;There are some great libraries out there (like &lt;a href="https://github.com/ReactiveX/RxJava"&gt;RxJava&lt;/a&gt; and &lt;a href="https://doc.akka.io/docs/akka/current/stream/index.html"&gt;Akka Streams&lt;/a&gt;) that work in much the same way. If you haven&amp;rsquo;t got a particular one in mind but want a world-class option and are already using Spring, then you might as well use &lt;a href="http://ProjectReactor.io"&gt;Project Reactor&lt;/a&gt;. It&amp;rsquo;s included in the box!&lt;/p&gt;
+&lt;p&gt;The Spring team developed Project Reactor to support the reactive efforts in the Spring ecosystem. You don&amp;rsquo;t need Spring to use Project Reactor, but all the reactive APIs in the Spring ecosystem build on Project Reactor for the dataflow options. Microsoft &lt;a href="https://azure.github.io/azure-sdk/java_introduction.html#async-service-clients"&gt;mandates&lt;/a&gt; that all their SDK clients and APIs be created using &lt;a href="https://devblogs.microsoft.com/azure-sdk/async-programming-with-project-reactor/"&gt;Project Reactor&lt;/a&gt;. &lt;a href="https://github.com/rsocket/rsocket-java"&gt;Facebook&lt;/a&gt; developed the Java client for their RSocket protocol using Project Reactor. Project Reactor is mature - it&amp;rsquo;s been around since 2010! - but growing new features all the time. If you&amp;rsquo;re &lt;em&gt;still&lt;/em&gt; not getting what you need, it works flawlessly with other reactive data flow libraries through the interoperable &lt;a href="http://www.reactive-streams.org/"&gt;Reactive Streams&lt;/a&gt; types. &lt;/p&gt;
+&lt;p&gt;Let&amp;rsquo;s look at an example of how Project Reactor makes short work of the composition of different data flow sources and sinks and all but eliminates any manual threading code. This is a &lt;em&gt;huge&lt;/em&gt; win. Remember: only one person &lt;em&gt;truly&lt;/em&gt; understands how to write safe, useful, multithreaded Java code&amp;hellip;. and it&amp;rsquo;s &lt;em&gt;not&lt;/em&gt; you! I don&amp;rsquo;t know &lt;em&gt;who&lt;/em&gt; it is. It doesn&amp;rsquo;t matter. Don&amp;rsquo;t tempt fate; let Project Reactor help. &lt;/p&gt;
+&lt;p&gt;You&amp;rsquo;ll need the following dependencies. &lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Reactive Web on &lt;a href="http://start.spring.io"&gt;the Spring Initializr&lt;/a&gt; - &lt;code&gt;org.springframework.boot&lt;/code&gt; : &lt;code&gt;spring-boot-starter-webflux&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Now, let&amp;rsquo;s look at a sample. This example demonstrates how easy it is to normalize processing given disparate kinds of data. In this example, we look at a Java 8 &lt;code&gt;java.util.Stream&amp;lt;T?&amp;gt;&lt;/code&gt; and a &lt;code&gt;CompletableFuture&amp;lt;T&amp;gt;&lt;/code&gt;, but the sky&amp;rsquo;s the limit. In most reactive applications, you won&amp;rsquo;t necessarily be in the business of converting non-reactive types to reactive types (like &lt;code&gt;Flux&amp;lt;T&amp;gt;&lt;/code&gt; or &lt;code&gt;Mono&amp;lt;T&amp;gt;&lt;/code&gt;). Those examples would be even more straightforward. This example assumes that you&amp;rsquo;ve got two data sources and need to compose them. &lt;/p&gt;
+&lt;pre&gt;&lt;code class="prettyprint java"&gt;package bootiful.rx;&#xD;
+&#xD;
+import org.springframework.boot.SpringApplication;&#xD;
+import org.springframework.boot.autoconfigure.SpringBootApplication;&#xD;
+import org.springframework.boot.context.event.ApplicationReadyEvent;&#xD;
+import org.springframework.context.ApplicationListener;&#xD;
+import org.springframework.context.annotation.Bean;&#xD;
+import reactor.core.publisher.Flux;&#xD;
+import reactor.core.publisher.Mono;&#xD;
+&#xD;
+import java.util.concurrent.CompletableFuture;&#xD;
+import java.util.stream.Stream;&#xD;
+&#xD;
+@SpringBootApplication&#xD;
+public class BootifulApplication {&#xD;
+&#xD;
+	CompletableFuture&amp;lt;String&amp;gt; returnCompletableFuture(int counter) {&#xD;
+		return CompletableFuture.supplyAsync(() -&amp;gt; {&#xD;
+			var start = System.currentTimeMillis();&#xD;
+			try {&#xD;
+				Thread.sleep((long) (Math.max((Math.random() * 10), 5) * 1000));&#xD;
+			}&#xD;
+			catch (InterruptedException e) {&#xD;
+				// threads smdh&#xD;
+			}&#xD;
+			var stop = System.currentTimeMillis();&#xD;
+			var delta = stop - start;&#xD;
+			return &amp;quot;(&amp;quot; + Thread.currentThread().getName() + &amp;quot;) Hello, #&amp;quot; + counter + &amp;quot;! (after &amp;quot; + delta + &amp;quot; ms.)&amp;quot;;&#xD;
+		});&#xD;
+	}&#xD;
+&#xD;
+	Stream&amp;lt;Integer&amp;gt; returnStream() {&#xD;
+		return Stream.iterate(0, integer -&amp;gt; integer + 1);&#xD;
+	}&#xD;
+&#xD;
+	@Bean&#xD;
+	ApplicationListener&amp;lt;ApplicationReadyEvent&amp;gt; begin() {&#xD;
+		return event -&amp;gt; {&#xD;
+&#xD;
+			Flux&amp;lt;String&amp;gt; count = Flux//&#xD;
+					.fromStream(this.returnStream()) //&#xD;
+					.take(10) //&#xD;
+					.flatMap(c -&amp;gt; Flux.zip(Mono.just(c), Mono.fromCompletionStage(this.returnCompletableFuture(c)))) //&#xD;
+					.map(tuple -&amp;gt; tuple.getT2() + &amp;quot; #&amp;quot; + tuple.getT1()); //&#xD;
+&#xD;
+			count.subscribe(System.out::println);&#xD;
+		};&#xD;
+	}&#xD;
+&#xD;
+	public static void main(String[] args) {&#xD;
+		SpringApplication.run(BootifulApplication.class, args);&#xD;
+	}&#xD;
+&#xD;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Do you know what else you get with Reactor? Operators supporting retries, error handling, timeouts, etc., all of which you would also farm out to yet another third-party library if they weren&amp;rsquo;t included in Project Reactor. Win-win. &lt;/p&gt;
+&lt;p&gt;I could go on and on about the opportunities that present themselves given something like Project Reactor. Indeed, I &lt;em&gt;did&lt;/em&gt;. Check out my book &lt;a href="http://ReactiveSpring.io"&gt;&lt;em&gt;Reactive Spring&lt;/em&gt;&lt;/a&gt; for (a lot) more. &lt;/p&gt;
+&lt;p&gt;Well? Did you have fun, and maybe learn something? As always, I&amp;rsquo;m keen on hearing from you, so &lt;a href="http://twitter.com/starbuxman"&gt;please sound off on Twitter (@starbuxman) &lt;/a&gt;! I&amp;rsquo;ll be back with another installment of &lt;em&gt;YMNNALFT&lt;/em&gt; later this week, so be sure not to miss that. I&amp;rsquo;ve got installments on, among other things, Easy RPC, The Garden of &lt;code&gt;*Utils&lt;/code&gt; objects, Dimensional Metrics with Micrometer, and many, many more topics. &lt;/p&gt;
+&lt;!-- rendered by Sagan Renderer Service --&gt;</content>
+  </entry>
   <entry>
     <title>This Week in Spring, January 5th, 2020 - 10th Anniversary Edition</title>
     <link rel="alternate" href="https://spring.io/blog/2021/01/05/this-week-in-spring-january-5th-2020-10th-anniversary-edition" />
@@ -2619,99 +2701,6 @@ You can open the Prometheus UI at &lt;a href="http://localhost:9090"&gt;http://l
 &lt;/div&gt;
 &lt;/div&gt;
 &lt;/div&gt;
-&lt;!-- rendered by Sagan Renderer Service --&gt;</content>
-  </entry>
-  <entry>
-    <title>Spring Statemachine 3.0.0-RC1 Released</title>
-    <link rel="alternate" href="https://spring.io/blog/2020/12/11/spring-statemachine-3-0-0-rc1-released" />
-    <category term="releases" label="Releases" />
-    <author>
-      <name>Janne Valkealahti</name>
-    </author>
-    <id>tag:spring.io,2020-12-05:4286</id>
-    <updated>2020-12-11T12:25:46Z</updated>
-    <content type="html">&lt;p&gt;Yes, we&amp;rsquo;re going reactive!&lt;/p&gt;
-&lt;p&gt;On behalf of the team and everyone that contributed, I am pleased to announce that the first release candidate of Spring Statemachine 3.0.0 has been released and is available from &lt;a href="https://repo.spring.io/milestone/"&gt;our milestone repository&lt;/a&gt;.&lt;/p&gt;
-&lt;p&gt;Highlights of this release include:&lt;/p&gt;
-&lt;ul&gt;
-  &lt;li&gt;Relevant api&amp;rsquo;s working with statemachine now have reactive methods.&lt;/li&gt;
-  &lt;li&gt;From a functional point of view this release is equivalent what&amp;rsquo;s in&lt;br/&gt; &lt;code&gt;2.2.x&lt;/code&gt;, &lt;code&gt;2.3.x&lt;/code&gt; and &lt;code&gt;2.4.x&lt;/code&gt; branches apart from reactive changes.&lt;/li&gt;
-  &lt;li&gt;We&amp;rsquo;ve chosen to align with recently released Spring Boot 2.4.1.&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;Internally everything is basically working atop of reactive concepts while we still keep old style methods around for blocking world. Plan is to see if and when it&amp;rsquo;s possible to phase out from a blocking world. Now few words about new api&amp;rsquo;s.&lt;/p&gt;
-&lt;p&gt;With good ol&amp;rsquo; blocking world you simple send an event and statemachine returns a boolean flag if event is accepted.&lt;/p&gt;
-&lt;pre&gt;&lt;code class="prettyprint java"&gt;StateMachine&amp;lt;String, String&amp;gt; stateMachine;&#xD;
-&#xD;
-boolean accepted = stateMachine.sendEvent(&amp;quot;event1&amp;quot;);
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;One slightly annoying thing were that you couldn&amp;rsquo;t differentiate between cases where event were accepted(event caused a transition), denied(interceptor error or no possible transition) or deferred(in case machine config used deferred events). We chose to enrich what gets returned from event handling methods.&lt;/p&gt;
-&lt;pre&gt;&lt;code class="prettyprint java"&gt;StateMachine&amp;lt;String, String&amp;gt; stateMachine;&#xD;
-&#xD;
-Mono&amp;lt;StateMachineEventResult&amp;lt;String, String&amp;gt;&amp;gt; result = stateMachine&#xD;
-  .sendEvent(Mono.just(MessageBuilder.withPayload(&amp;quot;event1&amp;quot;).build()));&#xD;
-&#xD;
-result.subscribe();
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;Firstly, one obvious thing as you probably guessed if being familiar with Reactor is that nothing happens until you subscribe to a returned &lt;code&gt;Mono&lt;/code&gt;, secondly returned type within &lt;code&gt;Mono&lt;/code&gt; is a &lt;code&gt;StateMachineEventResult&lt;/code&gt; which contains more info about what happened with an event handling.&lt;/p&gt;
-&lt;p&gt;What about &lt;code&gt;Flux&lt;/code&gt;, well simply pass in a flux and get a flux and handle it whatever you can do in a Reactor!&lt;/p&gt;
-&lt;pre&gt;&lt;code class="prettyprint java"&gt;StateMachine&amp;lt;String, String&amp;gt; stateMachine;&#xD;
-&#xD;
-Message&amp;lt;String&amp;gt; message1 = MessageBuilder.withPayload(&amp;quot;event1&amp;quot;).build();&#xD;
-Message&amp;lt;String&amp;gt; message2 = MessageBuilder.withPayload(&amp;quot;event2&amp;quot;).build();&#xD;
-&#xD;
-Flux&amp;lt;StateMachineEventResult&amp;lt;String, String&amp;gt;&amp;gt; results = stateMachine&#xD;
-  .sendEvents(Flux.just(message1, message2));&#xD;
-&#xD;
-results.subscribe();
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;What about actions as your main work with a statemachine happens there? Original blocking signature is:&lt;/p&gt;
-&lt;pre&gt;&lt;code class="prettyprint java"&gt;public interface Action&amp;lt;S, E&amp;gt; {&#xD;
-  void execute(StateContext&amp;lt;S, E&amp;gt; context);&#xD;
-}
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;New &lt;code&gt;ReactiveAction&lt;/code&gt; is simply a java&amp;rsquo;s &lt;code&gt;Function&lt;/code&gt; with types &lt;code&gt;StateContext&amp;lt;S, E&amp;gt;&lt;/code&gt; and &lt;code&gt;Mono&amp;lt;Void&amp;gt;&lt;/code&gt;:&lt;/p&gt;
-&lt;pre&gt;&lt;code class="prettyprint java"&gt;public interface ReactiveAction&amp;lt;S, E&amp;gt;&#xD;
-  extends Function&amp;lt;StateContext&amp;lt;S, E&amp;gt;, Mono&amp;lt;Void&amp;gt;&amp;gt; {}
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;Which translates to&lt;/p&gt;
-&lt;pre&gt;&lt;code class="prettyprint java"&gt;class MyAction implements ReactiveAction&amp;lt;String, String&amp;gt; {&#xD;
-  @Override&#xD;
-  public Mono&amp;lt;Void&amp;gt; apply(StateContext&amp;lt;String, String&amp;gt; context) {&#xD;
-      return Mono.empty();&#xD;
-  }&#xD;
-}
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;With configuration:&lt;/p&gt;
-&lt;pre&gt;&lt;code class="prettyprint java"&gt;@Configuration&#xD;
-@EnableStateMachine&#xD;
-public class StateMachineConfig extends StateMachineConfigurerAdapter&amp;lt;String, String&amp;gt; {&#xD;
-&#xD;
-  @Override&#xD;
-  public void configure(StateMachineStateConfigurer&amp;lt;String, String&amp;gt; states)&#xD;
-      throws Exception {&#xD;
-    states&#xD;
-      .withStates()&#xD;
-      .initial(&amp;quot;state1&amp;quot;)&#xD;
-      .state(&amp;quot;state2&amp;quot;);&#xD;
-  }&#xD;
-&#xD;
-  @Override&#xD;
-  public void configure(StateMachineTransitionConfigurer&amp;lt;String, String&amp;gt; transitions)&#xD;
-      throws Exception {&#xD;
-    transitions&#xD;
-      .withExternal()&#xD;
-        .source(&amp;quot;state1&amp;quot;).target(&amp;quot;state2&amp;quot;)&#xD;
-        .actionFunction(context -&amp;gt; Mono.fromRunnable(() -&amp;gt; {&#xD;
-          System.out.println(&amp;quot;HI&amp;quot;);&#xD;
-        }));&#xD;
-  }&#xD;
-}
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;Or &lt;em&gt;action&lt;/em&gt; as &lt;code&gt;Function&lt;/code&gt; definition in a normal way:&lt;/p&gt;
-&lt;pre&gt;&lt;code class="prettyprint java"&gt;Function&amp;lt;StateContext&amp;lt;String, String&amp;gt;, Mono&amp;lt;Void&amp;gt;&amp;gt; action =&#xD;
-  context -&amp;gt; Mono.empty();
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;a href="https://spring.io/projects/spring-statemachine"&gt;Project Page&lt;/a&gt; | &lt;a href="https://github.com/spring-projects/spring-statemachine"&gt;GitHub&lt;/a&gt; | &lt;a href="https://github.com/spring-projects/spring-statemachine/issues"&gt;Issues&lt;/a&gt; | &lt;a href="https://docs.spring.io/spring-statemachine/docs/3.0.0-RC1/reference/"&gt;Documentation&lt;/a&gt;&lt;/p&gt;
 &lt;!-- rendered by Sagan Renderer Service --&gt;</content>
   </entry>
 </feed>
